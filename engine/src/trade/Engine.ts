@@ -31,7 +31,9 @@ export class Engine {
         if (snapshot) {
             const snapshotSnapshot = JSON.parse(snapshot.toString());
             this.orderbooks = snapshotSnapshot.orderbooks.map((o: any) => new Orderbook(o.baseAsset, o.bids, o.asks, o.lastTradeId, o.currentPrice));
+            console.log("Loaded snapshot- orderbooks: ", this.orderbooks);
             this.balances = new Map(snapshotSnapshot.balances);
+            console.log("Loaded snapshot- balances: ", this.balances);
         } else {
             this.orderbooks = [new Orderbook(`TATA`, [], [], 0, 0)];
             this.setBaseBalances();
@@ -40,7 +42,7 @@ export class Engine {
             this.saveSnapshot();
         }, 1000 * 3);
     }
-
+    
     saveSnapshot() {
         const snapshotSnapshot = {
             orderbooks: this.orderbooks.map(o => o.getSnapshot()),
@@ -50,6 +52,7 @@ export class Engine {
     }
 
     process({ message, clientId }: {message: MessageFromApi, clientId: string}) {
+        console.log("processing message", message);
         switch (message.type) {
             case CREATE_ORDER:
                 try {
@@ -395,6 +398,8 @@ export class Engine {
     }
 
     setBaseBalances() {
+        //by default for every use set the balance to 10,000,000 INR
+        
         this.balances.set("1", {
             [BASE_CURRENCY]: {
                 available: 10000000,

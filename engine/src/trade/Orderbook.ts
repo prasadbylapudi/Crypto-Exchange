@@ -20,8 +20,8 @@ export interface Fill {
 export class Orderbook {
     bids: Order[];
     asks: Order[];
-    baseAsset: string;
-    quoteAsset: string = BASE_CURRENCY;
+    baseAsset: string; //* the asset being bought or sold - BTC, ETH, etc.
+    quoteAsset: string = BASE_CURRENCY; //* the asset being paid or received - 
     lastTradeId: number;
     currentPrice: number;
 
@@ -48,10 +48,9 @@ export class Orderbook {
     }
 
     //TODO: Add self trade prevention
-    addOrder(order: Order): {
-        executedQty: number,
-        fills: Fill[]
-    } {
+    addOrder(order: Order): { executedQty: number, fills: Fill[]}
+     {
+        console.log("order received is : ", order);
         if (order.side === "buy") {
             const {executedQty, fills} = this.matchBid(order); 
             order.filled = executedQty;
@@ -88,10 +87,18 @@ export class Orderbook {
         let executedQty = 0;
 
         for (let i = 0; i < this.asks.length; i++) {
+             // if the all orders are filled, we can break out of the loop
+            if (executedQty === order.quantity) {
+                break;
+            }
+            
             if (this.asks[i].price <= order.price && executedQty < order.quantity) {
                 const filledQty = Math.min((order.quantity - executedQty), this.asks[i].quantity);
                 executedQty += filledQty;
                 this.asks[i].filled += filledQty;
+
+                //if the order is placed by same user buying his own asset, prevent self trade.
+                if (this.asks[i].userId === order.userId) {
                 fills.push({
                     price: this.asks[i].price.toString(),
                     qty: filledQty,
